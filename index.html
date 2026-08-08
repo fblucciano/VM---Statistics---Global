@@ -547,8 +547,8 @@
         if (h.includes("austral")) return "Hospital Austral";
         if (h.includes("necker")) return "Hospital Necker";
         if (h.includes("ankara")) return "Ankara City Hospital";
-        if (h === "incor") return "InCor SP"; // Será re-tratado no loop da planilha
-        return String(raw).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+        if (h === "incor") return "InCor SP"; 
+        return h.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
     function normalizeCountry(rawCountry) {
@@ -557,7 +557,7 @@
         if (c.includes("brasil") || c.includes("brazil")) return "Brazil";
         if (c.includes("france") || c.includes("frança")) return "France";
         if (c.includes("uk") || c.includes("united kingdom")) return "UK";
-        return String(rawCountry).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+        return c.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
     function normalizeValve(rawValve) {
