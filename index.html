@@ -242,7 +242,7 @@
                     <div class="battery-nub"></div>
                     <div class="battery-text" id="kpi-battery-text">0%</div>
                 </div>
-                <div class="kpi-sub" id="kpi-progress-text" style="margin-top: 4px; font-size: 10px;">0 left</div>
+                <div class="kpi-sub" id="kpi-progress-text" style="margin-top: 4px; font-size: 10.5px;">0 left</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">Proctor Fees ($2k)</div>
@@ -333,7 +333,6 @@
 
     const MASTER_PASSWORD = "venus2026";
     
-    // Metas padrões por região
     let regionalTargets = {
         "LATAM": 200,
         "EU DISTRIBUTORS": 150,
@@ -381,7 +380,7 @@
         "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Dominican Republic": "🇩🇴", "France": "🇫🇷",
         "Turkey": "🇹🇷", "United Kingdom": "🇬🇧", "UK": "🇬🇧", "Germany": "🇩🇪",
         "Spain": "🇪🇸", "Italy": "🇮🇹", "Canada": "🇨🇦", "Thailand": "🇹🇭", "Malaysia": "🇲🇾", 
-        "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "Vietnam": "🇻🇳", "Pakistan": "🇵🇰", "Unknown": ""
+        "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "Vietnam": "🇻🇳", "Pakistan": "🇵🇰", "China": "🇨🇳", "Unknown": ""
     };
 
     const VALVE_IMAGES = {
@@ -408,16 +407,26 @@
         if (name === "Érika Rangel") return "🇨🇴";
         if (name === "Duc Anh Nguyen" || name.toLowerCase().includes("duc")) return "🇻🇳";
         if (name === "Nattaya" || name.toLowerCase().includes("nattaya")) return "🇹🇭";
+        if (name.includes("Fernando Pineda")) return "🇨🇱";
+        if (name.includes("Francisco Garay") || name === "Francisco Navarro") return "🇨🇱";
+        if (name.includes("Jorge Andrade")) return "🇪🇨";
+        if (name === "Jian Wang" || name.includes("Jian")) return "🇨🇳";
+        if (name === "Mariana Martinez") return "🇦🇷";
+        if (name === "Michelle Altamirano") return "🇨🇱";
+        if (name === "José Kleberth Tenório") return "🇧🇷";
+        if (name === "Francisco") return "🇧🇷";
+        if (name === "Marcio Truffa" || name === "Adriano Truffa") return "🇧🇷";
+
         if (!countryDict || Object.keys(countryDict).length === 0) return "";
         let bestCountry = Object.keys(countryDict).reduce((a, b) => countryDict[a] > countryDict[b] ? a : b);
         return FLAGS[bestCountry] || FLAGS[bestCountry.toLowerCase()] || "";
     }
 
-    // BLOQUEIO SUPREMO contra strings falsas, espaços vazios, ou nomes indesejados
+    // BLOQUEIO SUPREMO: Limpa lixo, load, no, false, true e espacos.
     function isValidField(raw) {
         if (!raw) return false;
         let s = String(raw).trim().toLowerCase();
-        if (s === '' || s === 'nan' || s === 'no' || s === 'yes' || s === 'false' || s === 'true' || s === 'none' || s === 'undefined' || s === '0') {
+        if (s === '' || s === 'nan' || s === 'no' || s === 'yes' || s === 'false' || s === 'true' || s === 'none' || s === 'undefined' || s === '0' || s === '-' || s === 'load') {
             return false;
         }
         return true;
@@ -427,11 +436,14 @@
         if (!isValidField(rawSpec)) return ["Unknown Specialist"];
         
         let found = [];
-        let parts = String(rawSpec).split(/\n| & | \+ |,| and /i);
+        let parts = String(rawSpec).split(/\n|\s*&\s*|\s*\+\s*|\s*,\s*|\s+and\s+|\s*\/\s*|\s*-\s*|\s+y\s+|\s+e\s+/i);
         
         parts.forEach(part => {
             if (!isValidField(part)) return;
             let n = part.toLowerCase().trim();
+            
+            // Tira títulos
+            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s+/i, '');
             
             if (n.includes("fabio") || n.includes("fábio") || n.includes("silva")) found.push("Fabio Silva");
             else if (n.includes("laura") || n.includes("zemp")) found.push("Laura Zemp");
@@ -439,61 +451,86 @@
             else if (n.includes("erika") || n.includes("érika") || n.includes("rangel")) found.push("Érika Rangel");
             else if (n.includes("alice")) found.push("Alice Moraes");
             else if (n.includes("mariana")) found.push("Mariana Martinez");
-            else if (n.includes("michelle")) found.push("Michelle Altamirano");
+            else if (n.includes("michelle") || n.includes("michele")) found.push("Michelle Altamirano");
             else if (n.includes("cesar") || n.includes("césar") || n.includes("pintos")) found.push("Cesar Pintos");
             else if (n.includes("dirk")) found.push("Dirk");
             else if (n.includes("duc anh") || n.includes("duc")) found.push("Duc Anh Nguyen");
             else if (n.includes("nattaya")) found.push("Nattaya");
+            else if (n.includes("adeyanira")) found.push("Adeyanira Hernandez");
+            else if (n.includes("fernanda") || n.includes("cisneros")) found.push("Fernanda Cisneros");
+            else if (n.includes("jess") || n.includes("jéss") || n.includes("picanço") || n.includes("picanco")) found.push("Jessica Picanço");
+            else if (n.includes("diego") && n.includes("villar")) found.push("Diego Villar");
+            else if (n.includes("rivarola") || n.includes("marcelo rivarola")) found.push("Marcelo Rivarola");
+            else if (n.includes("luis gabriel") || n.includes("loaiza")) found.push("Luis Gabriel Loaiza");
+            else if (n.includes("katia") || n.includes("corrales")) found.push("Katia Corrales");
+            else if (n.includes("luis mena")) found.push("Luis Mena");
+            else if (n === "francisco" || n.includes("francisco navarro")) found.push("Francisco Navarro");
+            else if (n.includes("leonardo") && n.includes("godoy")) found.push("Leonardo Godoy");
+            else if (n.includes("sonia") && n.includes("grosso")) found.push("Sonia Grosso");
+            else if (n.includes("ariane")) found.push("Ariane");
+            else if (n.includes("jian") || n.includes("wang")) found.push("Jian Wang");
             else {
-                found.push(part.trim().replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
+                found.push(cleanName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
             }
         });
 
         if (found.length === 0) return ["Unknown Specialist"];
-        return found;
+        return [...new Set(found)]; 
     }
 
     function normalizeDoctor(rawName) {
         if (!isValidField(rawName)) return ["Unknown Doctor"];
         
         let found = [];
-        let parts = String(rawName).split(/\n| & | \+ |,| and /i);
+        let parts = String(rawName).split(/\n|\s*&\s*|\s*\+\s*|\s*,\s*|\s+and\s+|\s*\/\s*|\s*-\s*|\s+y\s+|\s+e\s+/i);
         
         parts.forEach(part => {
             if (!isValidField(part)) return;
             let n = part.toLowerCase().trim();
             
-            if (n.includes("brahi") || n.includes("barhi")) found.push("Dr. Juan Pablo De Brahi");
-            else if (n.includes("spaletra")) found.push("Dr. Pablo Spaletra");
-            else if (n.includes("knebel") || n.includes("alexis") || n.includes("vasiluk")) found.push("Dr. Alexis Knebel");
-            else if (n.includes("montenegro")) found.push("Dr. Márcio Montenegro");
-            else if (n.includes("quintela") || n.includes("quintella")) found.push("Dr. Edgard Quintella");
-            else if (n.includes("garay")) found.push("Dr. Francisco Garay");
-            else if (n.includes("caramori")) found.push("Dr. Paulo Caramori");
-            else if (n.includes("pineda")) found.push("Dr. Fernando Pineda");
-            else if (n.includes("rivarola")) found.push("Dr. Marcelo Rivarola");
-            else if (n.includes("magno")) found.push("Dr. Alexandre Magno");
-            else if (n.includes("springmuller")) found.push("Dr. Daniel Springmuller");
-            else if (n.includes("baccaro")) found.push("Dr. Jorge Baccaro");
-            else if (n.includes("fuchs")) found.push("Dr. Felipe Fuchs");
-            else if (n.includes("salazar")) found.push("Dr. David Salazar");
-            else if (n.includes("lucini")) found.push("Dr. Victorio Lucini");
-            else if (n.includes("peñaloza")) found.push("Dr. Facundo Peñaloza");
-            else if (n.includes("sandoval")) found.push("Dr. Jorge Sandoval");
-            else if (n.includes("mosquera")) found.push("Dr. Walter Mosquera");
-            else if (n.includes("cressa")) found.push("Dr. Luis Cressa");
-            else if (n.includes("milani")) found.push("Dr. Milani");
-            else if (n.includes("annoni")) found.push("Dr. Annoni");
-            else if (n.includes("worakan")) found.push("Dr. Worakan");
-            else if (n.includes("supaporn")) found.push("Dr. Supaporn");
-            else if (n.includes("pimpak")) found.push("Dr. Pimpak");
+            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s+/i, '');
+            
+            if (n.includes("brahi") || n.includes("barhi")) found.push("Juan Pablo De Brahi");
+            else if (n.includes("spaletra")) found.push("Pablo Spaletra");
+            else if (n.includes("knebel") || n.includes("alexis") || n.includes("vasiluk")) found.push("Alexis Knebel");
+            else if (n.includes("montenegro")) found.push("Márcio Montenegro");
+            else if (n.includes("edgar") || n.includes("edigar") || n.includes("quintela") || n.includes("quitela") || n.includes("quintella")) found.push("Edgard Quintella");
+            else if (n.includes("garay")) found.push("Francisco Garay");
+            else if (n.includes("caramori")) found.push("Paulo Caramori");
+            else if (n.includes("pineda")) found.push("Fernando Pineda");
+            else if (n.includes("rivarola")) found.push("Marcelo Rivarola");
+            else if (n.includes("diego") && n.includes("villar")) found.push("Diego Villar");
+            else if (n.includes("magno")) found.push("Alexandre Magno");
+            else if (n.includes("springmuller") || n.includes("spingmüller")) found.push("Daniel Springmuller");
+            else if (n.includes("baccaro")) found.push("Jorge Baccaro");
+            else if (n.includes("fuchs")) found.push("Felipe Fuchs");
+            else if (n.includes("salazar")) found.push("David Salazar");
+            else if (n.includes("lucini") || n.includes("luccini")) found.push("Victorio Lucini");
+            else if (n.includes("peñaloza") || n.includes("peñolazo")) found.push("Facundo Peñaloza");
+            else if (n.includes("sandoval")) found.push("Jorge Sandoval");
+            else if (n.includes("mosquera")) found.push("Walter Mosquera");
+            else if (n.includes("cressa")) found.push("Luis Cressa");
+            else if (n.includes("milani")) found.push("Milani");
+            else if (n.includes("annoni")) found.push("Annoni");
+            else if (n.includes("worakan")) found.push("Worakan");
+            else if (n.includes("supaporn")) found.push("Supaporn");
+            else if (n.includes("pimpak")) found.push("Pimpak");
+            else if (n.includes("andrade")) found.push("Jorge Andrade");
+            else if (n.includes("dauvergne")) found.push("Christian Dauvergne");
+            else if (n.includes("montes") || n.includes("garcía montes") || n.includes("garcia montes")) found.push("José Antonio García Montes");
+            else if (n.includes("jian") || n.includes("wang")) found.push("Jian Wang");
+            else if (n.includes("kleberth")) found.push("José Kleberth Tenório");
+            else if (n.includes("adriano") && (n.includes("truf") || n.includes("trufa") || n.includes("truffa"))) found.push("Adriano Truffa");
+            else if (n.includes("marcio") && (n.includes("truf") || n.includes("trufa") || n.includes("truffa"))) found.push("Marcio Truffa");
+            else if (n === "francisco" || n === "feancisco" || n === "dr francisco" || n === "dr feancisco" || n === "francisco ") found.push("Francisco");
+            else if (n.includes("damsky")) found.push("Damsky Barbosa");
             else {
-                found.push(part.trim().replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
+                found.push(cleanName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
             }
         });
 
         if (found.length === 0) return ["Unknown Doctor"];
-        return found;
+        return [...new Set(found)];
     }
 
     function normalizeHospital(raw) {
@@ -504,7 +541,7 @@
         if (h.includes("austral")) return "Hospital Austral";
         if (h.includes("necker")) return "Hospital Necker";
         if (h.includes("ankara")) return "Ankara City Hospital";
-        if (h.includes("incor")) return "InCor";
+        if (h === "incor") return "InCor SP"; 
         return String(raw).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
@@ -575,11 +612,21 @@
                         let month = parseExcelDate(dateVal);
 
                         let country = normalizeCountry(getValFromRow(row, ['Country', 'country', 'PAIS', 'País']));
-                        let hospital = normalizeHospital(getValFromRow(row, ['Hospital', 'hospital', 'CENTRO', 'Centre']));
                         let valve = normalizeValve(getValFromRow(row, ['Product', 'product', 'Valve', 'VALVE']));
                         let proctorRaw = getValFromRow(row, ['Proctor', 'proctor']);
                         let implanterRaw = getValFromRow(row, ['Implanter', 'implanter', 'Operator', 'operador']);
                         let specialistRaw = getValFromRow(row, ['Clinical Specialist', 'clinical specialist', 'Specialist', 'especialista']);
+                        
+                        // Treat Incor Natal vs Incor SP
+                        let hospitalRaw = getValFromRow(row, ['Hospital', 'hospital', 'CENTRO', 'Centre']);
+                        if (String(hospitalRaw).toLowerCase() === 'incor') {
+                            if (String(implanterRaw).toLowerCase().includes('francisco') || String(implanterRaw).toLowerCase().includes('feancisco')) {
+                                hospitalRaw = "InCor Natal";
+                            } else {
+                                hospitalRaw = "InCor SP";
+                            }
+                        }
+                        let hospital = normalizeHospital(hospitalRaw);
 
                         let caseObj = {
                             id: i,
@@ -687,7 +734,7 @@
 
         const total = filtered.length;
         
-        // Atualiza Lógica da Bateria CSS
+        // Atualiza Lógica da Bateria CSS e Progresso
         let regTarget = regionalTargets[currentRegion] || 200;
         document.getElementById('kpi-total').innerText = total;
         document.getElementById('kpi-target-display').innerText = regTarget;
@@ -790,7 +837,7 @@
 
         valvesContainer.style.gridTemplateColumns = `repeat(${Math.min(availableValves.length, 4)}, 1fr)`;
 
-        // TECHNOLOGY MIX
+        // TECHNOLOGY MIX COM BARRAS GROSSAS
         let sortedValves = Object.entries(valves).sort((a, b) => b[1] - a[1]);
         const valveColors = ['#E68A2E', '#302B6A', '#171434', '#6B7280', '#9CA3AF'];
         let vHtml = '';
@@ -811,7 +858,7 @@
         });
         document.getElementById('mix-ranking-container').innerHTML = vHtml;
 
-        // COUNTRY RANKING
+        // COUNTRY RANKING COM BARRAS GROSSAS
         let sortedCountries = Object.entries(countries).sort((a, b) => b[1] - a[1]);
         const countryColors = ['#302B6A', '#E68A2E', '#171434', '#6B7280', '#10B981', '#3B82F6', '#F59E0B'];
         let cHtml = '';
@@ -832,7 +879,7 @@
         });
         document.getElementById('country-ranking-container').innerHTML = cHtml;
 
-        // Tabelas
+        // Tabelas Render
         function renderTable(tableId, dataObj, filterKey, isProctor = false, countryMap = {}) {
             let tbody = document.querySelector(`#${tableId} tbody`);
             tbody.innerHTML = '';
@@ -860,6 +907,7 @@
                 }
             });
         }
+        
         renderTable('hospitals-table', hospitals, 'hospital', false, hospC);
         renderTable('spec-table', specs, 'specialists', false, specC);
         renderTable('implants-table', implanters, 'implanters', false, implC);
