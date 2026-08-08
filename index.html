@@ -206,7 +206,7 @@
         </div>
     </div>
 
-    <!-- TELA DE SELEÇÃO GLOBAL DE REGIÕES -->
+    <!-- TELA DE SELEÇÃO GLOBAL DE REGIÕES COM METAS INDIVIDUAIS POR CAIXA -->
     <div id="global-selector-view" class="hidden">
         <div class="global-banner">
             <h2>VenusMedtech Global Operations 2026</h2>
@@ -333,6 +333,7 @@
 
     const MASTER_PASSWORD = "venus2026";
     
+    // Metas padrões por região
     let regionalTargets = {
         "LATAM": 200,
         "EU DISTRIBUTORS": 150,
@@ -416,6 +417,7 @@
         if (name === "José Kleberth Tenório") return "🇧🇷";
         if (name === "Francisco") return "🇧🇷";
         if (name === "Marcio Truffa" || name === "Adriano Truffa") return "🇧🇷";
+        if (name === "Ricardo Lisboa Cardozo") return "🇧🇷";
 
         if (!countryDict || Object.keys(countryDict).length === 0) return "";
         let bestCountry = Object.keys(countryDict).reduce((a, b) => countryDict[a] > countryDict[b] ? a : b);
@@ -436,6 +438,7 @@
         if (!isValidField(rawSpec)) return ["Unknown Specialist"];
         
         let found = [];
+        // Divide e conquista: separa casos na mesma célula. Ex: "Adeyanira/Fernanda"
         let parts = String(rawSpec).split(/\n|\s*&\s*|\s*\+\s*|\s*,\s*|\s+and\s+|\s*\/\s*|\s*-\s*|\s+y\s+|\s+e\s+/i);
         
         parts.forEach(part => {
@@ -469,12 +472,15 @@
             else if (n.includes("sonia") && n.includes("grosso")) found.push("Sonia Grosso");
             else if (n.includes("ariane")) found.push("Ariane");
             else if (n.includes("jian") || n.includes("wang")) found.push("Jian Wang");
+            else if (n.includes("gabriela") || n.includes("gabriella")) found.push("Gabriela Duarte");
+            else if (n.includes("ricardo")) found.push("Ricardo Lisboa Cardozo");
             else {
                 found.push(cleanName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
             }
         });
 
         if (found.length === 0) return ["Unknown Specialist"];
+        // Set() garante que "Fernanda, Fernanda" vire apenas UMA Fernanda.
         return [...new Set(found)]; 
     }
 
@@ -541,7 +547,7 @@
         if (h.includes("austral")) return "Hospital Austral";
         if (h.includes("necker")) return "Hospital Necker";
         if (h.includes("ankara")) return "Ankara City Hospital";
-        if (h === "incor") return "InCor SP"; 
+        if (h === "incor") return "InCor SP"; // Será re-tratado no loop da planilha
         return String(raw).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
@@ -620,10 +626,13 @@
                         // Treat Incor Natal vs Incor SP
                         let hospitalRaw = getValFromRow(row, ['Hospital', 'hospital', 'CENTRO', 'Centre']);
                         if (String(hospitalRaw).toLowerCase() === 'incor') {
-                            if (String(implanterRaw).toLowerCase().includes('francisco') || String(implanterRaw).toLowerCase().includes('feancisco')) {
+                            let impLower = String(implanterRaw).toLowerCase();
+                            if (impLower.includes('henrique') || impLower.includes('ribeiro')) {
+                                hospitalRaw = "InCor SP";
+                            } else if (impLower.includes('francisco') || impLower.includes('feancisco')) {
                                 hospitalRaw = "InCor Natal";
                             } else {
-                                hospitalRaw = "InCor SP";
+                                hospitalRaw = "InCor SP"; // Fallback
                             }
                         }
                         let hospital = normalizeHospital(hospitalRaw);
