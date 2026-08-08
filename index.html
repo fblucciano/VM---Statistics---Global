@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VenusMedtech - Global Executive BI</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS para ler Excel multi-abas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js e Plugin DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Biblioteca para Exportar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #F1F5F9;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --venus-deep: #171434;
+            --venus-blue: #302B6A;
+            --venus-accent: #E68A2E;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-body); color: var(--text-dark); margin: 0; padding: 20px 10px; display: flex; justify-content: center; min-height: 100vh; align-items: flex-start; box-sizing: border-box;}
+        
+        /* LOGIN */
+        #login-screen { width: 100%; max-width: 420px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 40px 30px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin: auto; margin-top: 10vh; }
+        .login-logo { height: 45px; object-fit: contain; margin-bottom: 25px; max-width: 250px; }
+        .login-title { font-size: 22px; font-weight: 800; color: var(--venus-deep); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: -0.5px;}
+        .login-input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 16px; text-align: center; box-sizing: border-box; outline: none; font-family: 'Space Mono', monospace; background: #F8FAFC; color: var(--venus-deep); margin-top: 20px; margin-bottom: 15px; transition: 0.2s; }
+        .login-input:focus { border-color: var(--venus-accent); background: var(--card-bg); }
+        .login-btn { width: 100%; background: var(--venus-deep); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .login-btn:hover { background: var(--venus-blue); transform: translateY(-2px); }
+        .error-msg { color: var(--danger); font-size: 12px; margin-top: 15px; display: none; font-weight: bold; }
+
+        /* APP CONTENT */
+        #app-content { display: none; width: 100%; max-width: 1160px; flex-direction: column; gap: 16px; box-sizing: border-box; }
+        #app-content.pdf-print-mode { max-width: 1160px !important; width: 1160px !important; display: flex !important; padding: 15px !important; margin: 0 !important; background: white;}
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.02); box-sizing: border-box;}
+        .logo { height: 32px; object-fit: contain; max-width: 200px; }
+        .btn-action { background: var(--venus-deep); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-action.export { background: var(--success); }
+        .btn-action.reset { background: var(--venus-accent); color: var(--venus-deep); }
+        
+        /* UPLOAD ZONE */
+        .upload-zone { border: 2px dashed var(--venus-blue); border-radius: 12px; background: #EEF2FF; padding: 35px 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .upload-zone:hover { background: #E0E7FF; border-color: var(--venus-accent); }
+        .upload-zone h3 { margin: 0; color: var(--venus-deep); font-size: 15px; text-transform: uppercase;}
+        .upload-zone p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 12px; }
+
+        /* GLOBAL SELECTOR SCREEN */
+        #global-selector-view { display: flex; flex-direction: column; gap: 20px; }
+        .global-banner { background: linear-gradient(135deg, var(--venus-deep), var(--venus-blue)); color: white; padding: 25px; border-radius: 14px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .global-banner h2 { margin: 0 0 5px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .global-banner p { margin: 0; font-size: 12px; opacity: 0.8; }
+
+        .grid-regions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .region-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 18px 12px; text-align: center; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 190px; box-sizing: border-box; }
+        .region-card:hover { border-color: var(--venus-accent); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(230,138,46,0.15); background: #FFF7ED; }
+        .region-card h4 { margin: 0 0 4px 0; color: var(--venus-deep); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; width: 100%; }
+        .region-card .reg-count { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: bold; color: var(--venus-accent); margin-bottom: 6px; cursor: pointer; width: 100%; }
+        
+        .region-valves-preview { display: flex; gap: 10px; justify-content: center; align-items: center; height: 38px; width: 100%; margin-bottom: 6px; cursor: pointer; }
+        .region-valves-preview img { height: 34px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15)); }
+
+        .region-target-input-box { background: #F8FAFC; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; box-sizing: border-box; }
+        .region-target-input-box label { font-size: 9.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .region-target-input-box input { background: white; border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 6px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: bold; color: var(--venus-deep); width: 70px; text-align: center; outline: none; }
+        .region-target-input-box input:focus { border-color: var(--venus-accent); }
+
+        /* ACTIVE FILTERS BAR */
+        .filter-bar { background: var(--card-bg); padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.02); box-sizing: border-box;}
+        .filter-label { font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .filter-chip { display: inline-flex; align-items: center; background: #EEF2FF; color: var(--venus-blue); border: 1px solid #C7D2FE; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .filter-chip:hover { background: #FEE2E2; color: var(--danger); border-color: #FECACA; }
+        .filter-chip span { margin-left: 6px; font-weight: 900; }
+
+        /* GRIDS FLEXÍVEIS E EQUIDISTANTES */
+        .grid-valves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; box-sizing: border-box; width: 100%; }
+        .valve-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 120px; box-sizing: border-box; min-width: 0;}
+        .valve-card:hover { transform: translateY(-2px); border-color: var(--venus-blue); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .valve-card.active { border-color: var(--venus-accent); background: #FFF7ED; transform: translateY(-2px); }
+        .valve-img { height: 48px; object-fit: contain; margin-bottom: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .valve-name { font-size: 11px; font-weight: 800; color: var(--venus-deep); margin-bottom: 2px; text-transform: uppercase;}
+        .valve-count { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: bold; color: var(--venus-accent); }
+        .valve-card.active .valve-name { color: var(--venus-accent); }
+
+        /* KPIs ALINHAMENTO PERFEITO */
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; box-sizing: border-box; width: 100%; }
+        .kpi-card { background: linear-gradient(145deg, #FFFFFF, #F8FAFC); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 145px; box-sizing: border-box; gap: 8px; min-width: 0; }
+        .kpi-title { font-size: 10.5px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;}
+        .kpi-value { font-family: 'Space Mono', monospace; font-size: 26px; font-weight: 800; color: var(--venus-deep); margin: 0; text-align: center; width: 100%; line-height: 1.1; word-break: break-word;}
+        .kpi-value.highlight { color: var(--venus-accent); }
+        .kpi-sub { font-size: 10px; color: var(--venus-blue); font-weight: 700; line-height: 1.3; margin: 0;}
+
+        /* BATERIA DINÂMICA CSS */
+        .battery-wrap { display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .battery-body { width: 55px; height: 22px; border: 2px solid var(--text-muted); border-radius: 4px; padding: 2px; position: relative; display: flex; align-items: center;}
+        .battery-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease, background-color 0.4s ease; }
+        .battery-nub { width: 4px; height: 10px; background: var(--text-muted); border-radius: 0 4px 4px 0; }
+        .battery-text { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 800; margin-left: 8px; }
+
+        /* GRIDS & PANELS */
+        .grid-3-charts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; box-sizing: border-box; width: 100%; }
+        .grid-2-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; box-sizing: border-box; width: 100%; }
+        .panel { background: var(--card-bg); border-radius: 12px; padding: 18px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; box-sizing: border-box; min-width: 0; }
+        
+        .panel-header { text-align: center; margin-bottom: 15px; width: 100%; }
+        .panel-title { color: var(--venus-deep); font-size: 12px; font-weight: 800; margin: 0; text-transform: uppercase; border-bottom: 3px solid var(--venus-accent); padding-bottom: 5px; display: inline-block; letter-spacing: 0.5px;}
+        
+        .chart-container { position: relative; width: 100%; flex-grow: 1; min-height: 220px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; overflow-y: auto;}
+
+        /* BARRAS GROSSAS RANKING */
+        .html-ranking-row { display: flex; flex-direction: column; margin-bottom: 14px; cursor: pointer; padding: 6px; border-radius: 8px; transition: 0.2s;}
+        .html-ranking-row:hover { background-color: #EEF2FF; }
+        .html-ranking-labels { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; color: var(--venus-deep); margin-bottom: 6px; }
+        .html-ranking-data { font-family: 'Space Mono', monospace; color: var(--venus-blue); font-size: 12px;}
+        .html-ranking-track { width: 100%; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 12px; height: 24px; overflow: hidden; }
+        .html-ranking-fill { height: 100%; border-radius: 12px; transition: width 0.5s ease; }
+
+        /* TABLES */
+        .table-wrap { flex-grow: 1; max-height: 260px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; -webkit-overflow-scrolling: touch; box-sizing: border-box;}
+        .data-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; min-width: 260px; box-sizing: border-box; }
+        .data-table thead th { position: sticky; top: 0; background: var(--venus-deep); color: white; padding: 10px 8px; font-weight: bold; text-transform: uppercase; z-index: 1;}
+        .data-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); color: var(--text-dark); font-weight: 600;}
+        .clickable-row { cursor: pointer; transition: 0.2s; }
+        .clickable-row:hover { background: #EEF2FF; }
+        .data-table .val { font-family: 'Space Mono', monospace; color: var(--venus-deep); font-weight: bold; text-align: center; font-size: 13px;}
+        .data-table .money { font-family: 'Space Mono', monospace; color: var(--success); font-weight: bold; text-align: right; font-size: 12px;}
+        .data-table .badge { background: #FEF3C7; color: #D97706; padding: 2px 5px; border-radius: 4px; font-size: 8.5px; margin-top:3px; display:inline-block; font-weight:bold;}
+        .data-table .flag-icon { font-size: 15px; margin-right: 6px; vertical-align: middle; }
+        .medal { font-size: 15px; margin-right: 4px; }
+
+        .hidden { display: none !important; }
+        
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 6px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 6px; }
+
+        @media (max-width: 1024px) {
+            .grid-regions { grid-template-columns: repeat(2, 1fr); }
+            .grid-5 { grid-template-columns: repeat(3, 1fr); }
+            .grid-5 .kpi-card:nth-child(4), .grid-5 .kpi-card:nth-child(5) { grid-column: span 1; }
+            .grid-3-charts { grid-template-columns: 1fr 1fr; }
+            .grid-3-charts .panel:last-child { grid-column: span 2; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px 6px; }
+            .grid-regions { grid-template-columns: 1fr; gap: 8px; }
+            .grid-5 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .grid-5 .kpi-card:last-child { grid-column: span 2; }
+            .grid-3-charts { grid-template-columns: 1fr; gap: 10px; }
+            .grid-3-charts .panel:last-child { grid-column: auto; }
+            .grid-2-tables { grid-template-columns: 1fr; gap: 10px; }
+            .grid-valves { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .top-bar { flex-direction: column; gap: 10px; align-items: center; padding: 12px 15px; } 
+            #action-buttons { width: 100%; display: flex; gap: 8px;}
+            .btn-action { flex: 1; text-align: center; padding: 10px 8px; font-size: 10px;}
+            .logo { max-width: 160px; } 
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+    <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" alt="VenusMedtech" class="login-logo">
+    <h2 class="login-title">Global BI Analytics</h2>
+    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Corporate Access Only</p>
+    <form onsubmit="checkPassword(event)">
+        <input type="password" id="password-input" class="login-input" placeholder="Enter Password" required autocomplete="off">
+        <button type="submit" class="login-btn" id="login-btn-text">Secure Login</button>
+        <div id="error-msg" class="error-msg" style="display: none;">Incorrect password. Please try again.</div>
+    </form>
+</div>
+
+<!-- DASHBOARD -->
+<div id="app-content">
+    
+    <div class="top-bar">
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" alt="VenusMedtech" class="logo">
+        <div id="action-buttons">
+            <button class="btn-action" style="background-color: var(--venus-blue);" onclick="backToGlobalSelector()" id="btn-global-view" class="hidden">🌐 Regions</button>
+            <button class="btn-action export" onclick="exportToPDF()">Export PDF</button>
+            <button class="btn-action reset" onclick="location.reload()">Reset</button>
+        </div>
+    </div>
+
+    <!-- UPLOAD MULTI-SHEET EXCEL -->
+    <div class="panel" id="upload-panel">
+        <div class="upload-zone" onclick="document.getElementById('excel-file').click()">
+            <h3>📁 UPLOAD GLOBAL EXCEL ('Implant Data 2026 w pivot.xlsx')</h3>
+            <p>The engine will automatically read all regional sheets: EU DISTRIBUTORS, EU DIRECT, APAC, ME, LATAM.</p>
+            <input type="file" id="excel-file" accept=".xlsx" style="display:none;" onchange="handleExcelUpload(event)">
+        </div>
+    </div>
+
+    <!-- TELA DE SELEÇÃO GLOBAL DE REGIÕES -->
+    <div id="global-selector-view" class="hidden">
+        <div class="global-banner">
+            <h2>VenusMedtech Global Operations 2026</h2>
+            <p>Set regional targets below and click a region to inspect performance.</p>
+        </div>
+        <div class="grid-regions" id="region-cards-container"></div>
+    </div>
+
+    <!-- PAINEL DE DETALHES DA REGIÃO SELECIONADA -->
+    <div id="dashboard-panels" class="hidden">
+        
+        <!-- ACTIVE FILTERS -->
+        <div class="filter-bar" id="filter-bar">
+            <span class="filter-label">Active Filters:</span>
+            <div id="active-filters-container" style="display:flex; gap:6px; flex-wrap:wrap; justify-content: center;"></div>
+        </div>
+
+        <!-- VALVE INTERACTIVE CARDS -->
+        <div class="grid-valves" id="valves-cards-container"></div>
+
+        <!-- KPIs: 5 CAIXAS COM ALINHAMENTO PERFEITO -->
+        <div class="grid-5">
+            <div class="kpi-card">
+                <div class="kpi-title">Implants / Target</div>
+                <div class="kpi-value highlight" style="margin-top: -4px;">
+                    <span id="kpi-total">0</span><span style="font-size:18px; color:var(--text-muted);">/<span id="kpi-target-display">200</span></span>
+                </div>
+                <!-- BATERIA DINÂMICA CSS -->
+                <div class="battery-wrap">
+                    <div class="battery-body">
+                        <div class="battery-fill" id="kpi-battery-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="battery-nub"></div>
+                    <div class="battery-text" id="kpi-battery-text">0%</div>
+                </div>
+                <div class="kpi-sub" id="kpi-progress-text" style="margin-top: 4px; font-size: 10px;">0 left</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Proctor Fees ($2k)</div>
+                <div class="kpi-value" id="kpi-fees" style="color: var(--success);">$0</div>
+                <div class="kpi-sub">Excluding BR Cases</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Top Country</div>
+                <div class="kpi-value" id="kpi-top-country" style="font-size: 20px;">--</div>
+                <div class="kpi-sub">By Volume</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Top Hospital</div>
+                <div class="kpi-value" id="kpi-top-hospital" style="font-size: 13px;">--</div>
+                <div class="kpi-sub">Most Active Center</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Active Doctors</div>
+                <div class="kpi-value" id="kpi-doctors">0</div>
+                <div class="kpi-sub">Unique Implanters</div>
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="grid-3-charts">
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">TECHNOLOGY MIX</h2></div>
+                <div class="chart-container" id="mix-ranking-container" style="justify-content: flex-start; overflow-y: auto;"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">COUNTRY RANKING</h2></div>
+                <div class="chart-container" id="country-ranking-container" style="justify-content: flex-start; overflow-y: auto;"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">MONTHLY TREND</h2></div>
+                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- TABLES -->
+        <div class="grid-2-tables">
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">HOSPITAL RANKING</h2></div>
+                <div class="table-wrap">
+                    <table class="data-table" id="hospitals-table">
+                        <thead><tr><th>Hospital / Center (Click to Filter)</th><th style="text-align:center;">Cases</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">CLINICAL SPECIALISTS</h2></div>
+                <div class="table-wrap">
+                    <table class="data-table" id="spec-table">
+                        <thead><tr><th>Specialist (Click to Filter)</th><th style="text-align:center;">Cases</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">TOP IMPLANTERS</h2></div>
+                <div class="table-wrap">
+                    <table class="data-table" id="implants-table">
+                        <thead><tr><th>Doctor (Click to Filter)</th><th style="text-align:center;">Cases</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><h2 class="panel-title">PROCTOR RANKING & PAYOUTS</h2></div>
+                <div class="table-wrap">
+                    <table class="data-table" id="proctor-table">
+                        <thead><tr><th>Proctor (Click to Filter)</th><th style="text-align:center;">Vol</th><th style="text-align:right;">Payout</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+    const MASTER_PASSWORD = "venus2026";
+    
+    // Metas padrões por região
+    let regionalTargets = {
+        "LATAM": 200,
+        "EU DISTRIBUTORS": 150,
+        "EU DIRECT": 120,
+        "APAC": 100,
+        "ME": 150,
+        "GLOBAL (ALL REGIONS)": 720
+    };
+
+    function updateRegionalTarget(regName, val) {
+        let parsed = parseInt(val);
+        if (!isNaN(parsed) && parsed > 0) {
+            regionalTargets[regName] = parsed;
+        }
+    }
+
+    function checkPassword(event) {
+        event.preventDefault();
+        const inputVal = document.getElementById('password-input').value;
+        const errorMsg = document.getElementById('error-msg');
+        const loginBtn = document.getElementById('login-btn-text');
+
+        if (inputVal === MASTER_PASSWORD) {
+            loginBtn.innerText = "ACCESS GRANTED ✓";
+            loginBtn.style.background = "#10B981";
+            errorMsg.style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'flex';
+            }, 300);
+        } else {
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    let globalRegionsData = {};
+    let currentRegion = null;
+    let globalCases = [];
+    let currentFilters = {};
+    let trendChart;
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const FLAGS = {
+        "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴",
+        "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Dominican Republic": "🇩🇴", "France": "🇫🇷",
+        "Turkey": "🇹🇷", "United Kingdom": "🇬🇧", "UK": "🇬🇧", "Germany": "🇩🇪",
+        "Spain": "🇪🇸", "Italy": "🇮🇹", "Canada": "🇨🇦", "Thailand": "🇹🇭", "Malaysia": "🇲🇾", 
+        "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "Vietnam": "🇻🇳", "Pakistan": "🇵🇰", "Unknown": ""
+    };
+
+    const VALVE_IMAGES = {
+        "Venus Vitae": "https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/VItae-F.png",
+        "VenusA-Valve": "https://raw.githubusercontent.com/fblucciano/imagens-venus/4a254e93a90f6225406d11dafa8c519437a99e9b/AF.png",
+        "Venus PowerX": "https://raw.githubusercontent.com/fblucciano/imagens-venus/4a254e93a90f6225406d11dafa8c519437a99e9b/PXF.png",
+        "VenusP-Valve": "https://raw.githubusercontent.com/fblucciano/imagens-venus/9069e63d44d56d54148b383861cc14fa9af2d3b0/Venus%20P_Final.png"
+    };
+
+    function toggleFilter(key, value) {
+        if (currentFilters[key] === value) delete currentFilters[key];
+        else currentFilters[key] = value;
+        updateDashboard();
+    }
+
+    function clearFilters() {
+        currentFilters = {};
+        updateDashboard();
+    }
+
+    function getFlag(name, countryDict) {
+        if (name === "Fabio Silva") return "🇧🇷";
+        if (name === "Stephanie Bugueño") return "🇨🇱";
+        if (name === "Érika Rangel") return "🇨🇴";
+        if (name === "Duc Anh Nguyen" || name.toLowerCase().includes("duc")) return "🇻🇳";
+        if (name === "Nattaya" || name.toLowerCase().includes("nattaya")) return "🇹🇭";
+        if (!countryDict || Object.keys(countryDict).length === 0) return "";
+        let bestCountry = Object.keys(countryDict).reduce((a, b) => countryDict[a] > countryDict[b] ? a : b);
+        return FLAGS[bestCountry] || FLAGS[bestCountry.toLowerCase()] || "";
+    }
+
+    // BLOQUEIO SUPREMO contra strings falsas, espaços vazios, ou nomes indesejados
+    function isValidField(raw) {
+        if (!raw) return false;
+        let s = String(raw).trim().toLowerCase();
+        if (s === '' || s === 'nan' || s === 'no' || s === 'yes' || s === 'false' || s === 'true' || s === 'none' || s === 'undefined' || s === '0') {
+            return false;
+        }
+        return true;
+    }
+
+    function normalizeSpecialists(rawSpec) {
+        if (!isValidField(rawSpec)) return ["Unknown Specialist"];
+        
+        let found = [];
+        let parts = String(rawSpec).split(/\n| & | \+ |,| and /i);
+        
+        parts.forEach(part => {
+            if (!isValidField(part)) return;
+            let n = part.toLowerCase().trim();
+            
+            if (n.includes("fabio") || n.includes("fábio") || n.includes("silva")) found.push("Fabio Silva");
+            else if (n.includes("laura") || n.includes("zemp")) found.push("Laura Zemp");
+            else if (n.includes("stephanie") || n.includes("bugueño") || n.includes("bugueno") || n.includes("stephie")) found.push("Stephanie Bugueño");
+            else if (n.includes("erika") || n.includes("érika") || n.includes("rangel")) found.push("Érika Rangel");
+            else if (n.includes("alice")) found.push("Alice Moraes");
+            else if (n.includes("mariana")) found.push("Mariana Martinez");
+            else if (n.includes("michelle")) found.push("Michelle Altamirano");
+            else if (n.includes("cesar") || n.includes("césar") || n.includes("pintos")) found.push("Cesar Pintos");
+            else if (n.includes("dirk")) found.push("Dirk");
+            else if (n.includes("duc anh") || n.includes("duc")) found.push("Duc Anh Nguyen");
+            else if (n.includes("nattaya")) found.push("Nattaya");
+            else {
+                found.push(part.trim().replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
+            }
+        });
+
+        if (found.length === 0) return ["Unknown Specialist"];
+        return found;
+    }
+
+    function normalizeDoctor(rawName) {
+        if (!isValidField(rawName)) return ["Unknown Doctor"];
+        
+        let found = [];
+        let parts = String(rawName).split(/\n| & | \+ |,| and /i);
+        
+        parts.forEach(part => {
+            if (!isValidField(part)) return;
+            let n = part.toLowerCase().trim();
+            
+            if (n.includes("brahi") || n.includes("barhi")) found.push("Dr. Juan Pablo De Brahi");
+            else if (n.includes("spaletra")) found.push("Dr. Pablo Spaletra");
+            else if (n.includes("knebel") || n.includes("alexis") || n.includes("vasiluk")) found.push("Dr. Alexis Knebel");
+            else if (n.includes("montenegro")) found.push("Dr. Márcio Montenegro");
+            else if (n.includes("quintela") || n.includes("quintella")) found.push("Dr. Edgard Quintella");
+            else if (n.includes("garay")) found.push("Dr. Francisco Garay");
+            else if (n.includes("caramori")) found.push("Dr. Paulo Caramori");
+            else if (n.includes("pineda")) found.push("Dr. Fernando Pineda");
+            else if (n.includes("rivarola")) found.push("Dr. Marcelo Rivarola");
+            else if (n.includes("magno")) found.push("Dr. Alexandre Magno");
+            else if (n.includes("springmuller")) found.push("Dr. Daniel Springmuller");
+            else if (n.includes("baccaro")) found.push("Dr. Jorge Baccaro");
+            else if (n.includes("fuchs")) found.push("Dr. Felipe Fuchs");
+            else if (n.includes("salazar")) found.push("Dr. David Salazar");
+            else if (n.includes("lucini")) found.push("Dr. Victorio Lucini");
+            else if (n.includes("peñaloza")) found.push("Dr. Facundo Peñaloza");
+            else if (n.includes("sandoval")) found.push("Dr. Jorge Sandoval");
+            else if (n.includes("mosquera")) found.push("Dr. Walter Mosquera");
+            else if (n.includes("cressa")) found.push("Dr. Luis Cressa");
+            else if (n.includes("milani")) found.push("Dr. Milani");
+            else if (n.includes("annoni")) found.push("Dr. Annoni");
+            else if (n.includes("worakan")) found.push("Dr. Worakan");
+            else if (n.includes("supaporn")) found.push("Dr. Supaporn");
+            else if (n.includes("pimpak")) found.push("Dr. Pimpak");
+            else {
+                found.push(part.trim().replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
+            }
+        });
+
+        if (found.length === 0) return ["Unknown Doctor"];
+        return found;
+    }
+
+    function normalizeHospital(raw) {
+        if (!raw || raw === 'nan' || String(raw).trim() === '') return "Unknown Hospital";
+        let h = String(raw).toLowerCase().trim();
+        if (h.includes("torax") || h.includes("tórax")) return "Inst. Nacional del Tórax";
+        if (h.includes("corrientes")) return "Inst. Cardiológico Corrientes";
+        if (h.includes("austral")) return "Hospital Austral";
+        if (h.includes("necker")) return "Hospital Necker";
+        if (h.includes("ankara")) return "Ankara City Hospital";
+        if (h.includes("incor")) return "InCor";
+        return String(raw).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+
+    function normalizeCountry(rawCountry) {
+        if (!rawCountry || rawCountry === 'nan') return "Unknown";
+        let c = String(rawCountry).toLowerCase().trim();
+        if (c.includes("brasil") || c.includes("brazil")) return "Brazil";
+        if (c.includes("france") || c.includes("frança")) return "France";
+        if (c.includes("uk") || c.includes("united kingdom")) return "UK";
+        return String(rawCountry).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+
+    function normalizeValve(rawValve) {
+        if (!rawValve || rawValve === 'nan') return "Other";
+        let v = String(rawValve).toLowerCase();
+        if (v.includes("vitae") || v.includes("ab")) return "Venus Vitae";
+        if (v.includes("venusa") || v.includes("venus_a")) return "VenusA-Valve";
+        if (v.includes("powerx") || v.includes("px")) return "Venus PowerX";
+        if (v.includes("venusp") || v.includes("venus_p")) return "VenusP-Valve";
+        return "Other";
+    }
+
+    function parseExcelDate(dateVal) {
+        if (!dateVal) return 0;
+        if (typeof dateVal === 'number') {
+            const utcDays = Math.floor(dateVal - 25569);
+            const utcValue = utcDays * 86400;
+            const dateInfo = new Date(utcValue * 1000);
+            return !isNaN(dateInfo.getTime()) ? dateInfo.getMonth() : 0;
+        }
+        let dObj = new Date(dateVal);
+        if (!isNaN(dObj.getTime())) return dObj.getMonth();
+        return 0;
+    }
+
+    function getValFromRow(row, possibleKeys) {
+        for (let k of possibleKeys) {
+            for (let rk in row) {
+                if (rk.toLowerCase().trim() === k.toLowerCase().trim()) {
+                    let val = row[rk];
+                    if (val !== undefined && val !== null && String(val).trim() !== '') return val;
+                }
+            }
+        }
+        return '';
+    }
+
+    function handleExcelUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            const targetSheets = ['EU DISTRIBUTORS', 'EU DIRECT', 'APAC', 'ME', 'LATAM'];
+            globalRegionsData = {};
+            let globalAllCases = [];
+
+            targetSheets.forEach(sheetName => {
+                if (workbook.Sheets[sheetName]) {
+                    const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+                    let sheetCases = [];
+
+                    jsonRows.forEach((row, i) => {
+                        let dateVal = getValFromRow(row, ['Date', 'date', 'DATA']);
+                        let month = parseExcelDate(dateVal);
+
+                        let country = normalizeCountry(getValFromRow(row, ['Country', 'country', 'PAIS', 'País']));
+                        let hospital = normalizeHospital(getValFromRow(row, ['Hospital', 'hospital', 'CENTRO', 'Centre']));
+                        let valve = normalizeValve(getValFromRow(row, ['Product', 'product', 'Valve', 'VALVE']));
+                        let proctorRaw = getValFromRow(row, ['Proctor', 'proctor']);
+                        let implanterRaw = getValFromRow(row, ['Implanter', 'implanter', 'Operator', 'operador']);
+                        let specialistRaw = getValFromRow(row, ['Clinical Specialist', 'clinical specialist', 'Specialist', 'especialista']);
+
+                        let caseObj = {
+                            id: i,
+                            monthName: monthNames[month] || 'Jan',
+                            country: country,
+                            hospital: hospital,
+                            valve: valve,
+                            proctors: normalizeDoctor(proctorRaw),
+                            implanters: normalizeDoctor(implanterRaw),
+                            specialists: normalizeSpecialists(specialistRaw)
+                        };
+                        sheetCases.push(caseObj);
+                        globalAllCases.push(caseObj);
+                    });
+
+                    globalRegionsData[sheetName] = sheetCases;
+                    if (regionalTargets[sheetName] === undefined) regionalTargets[sheetName] = 150;
+                }
+            });
+
+            globalRegionsData['GLOBAL (ALL REGIONS)'] = globalAllCases;
+            regionalTargets['GLOBAL (ALL REGIONS)'] = 720;
+
+            document.getElementById('upload-panel').style.display = 'none';
+            buildGlobalSelector();
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function buildGlobalSelector() {
+        const container = document.getElementById('region-cards-container');
+        container.innerHTML = '';
+        
+        Object.keys(globalRegionsData).forEach(regName => {
+            let count = globalRegionsData[regName].length;
+            let currentTarget = regionalTargets[regName] || 200;
+            
+            let valvesInReg = {};
+            globalRegionsData[regName].forEach(c => { valvesInReg[c.valve] = (valvesInReg[c.valve] || 0) + 1; });
+            
+            let valvesImgHtml = '';
+            Object.keys(valvesInReg).forEach(vName => {
+                if (VALVE_IMAGES[vName]) {
+                    valvesImgHtml += `<img src="${VALVE_IMAGES[vName]}" alt="${vName}" title="${vName} (${valvesInReg[vName]} cases)">`;
+                }
+            });
+
+            container.innerHTML += `
+                <div class="region-card">
+                    <h4 onclick="selectRegion('${regName}')">${regName}</h4>
+                    <div class="reg-count" onclick="selectRegion('${regName}')">${count} Cases</div>
+                    <div class="region-valves-preview" onclick="selectRegion('${regName}')">${valvesImgHtml}</div>
+                    <div class="region-target-input-box" onclick="event.stopPropagation();">
+                        <label>Target:</label>
+                        <input type="number" value="${currentTarget}" onchange="updateRegionalTarget('${regName}', this.value)">
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('global-selector-view').classList.remove('hidden');
+    }
+
+    function selectRegion(regName) {
+        currentRegion = regName;
+        globalCases = globalRegionsData[regName];
+        currentFilters = {};
+        
+        document.getElementById('global-selector-view').classList.add('hidden');
+        document.getElementById('dashboard-panels').classList.remove('hidden');
+        document.getElementById('btn-global-view').classList.remove('hidden');
+        updateDashboard();
+    }
+
+    function backToGlobalSelector() {
+        document.getElementById('dashboard-panels').classList.add('hidden');
+        document.getElementById('btn-global-view').classList.add('hidden');
+        document.getElementById('global-selector-view').classList.remove('hidden');
+        buildGlobalSelector();
+    }
+
+    function updateDashboard() {
+        const filterContainer = document.getElementById('active-filters-container');
+        filterContainer.innerHTML = '';
+        const keys = Object.keys(currentFilters);
+        if(keys.length === 0) {
+            filterContainer.innerHTML = `<span style="font-size:11px; color:#64748B;">Active Region: <b>${currentRegion}</b>. Click any chart or row to slice data.</span>`;
+        } else {
+            keys.forEach(k => {
+                filterContainer.innerHTML += `<div class="filter-chip" onclick="toggleFilter('${k}', '${currentFilters[k]}')">${k.toUpperCase()}: ${currentFilters[k]} <span>×</span></div>`;
+            });
+            filterContainer.innerHTML += `<button onclick="clearFilters()" style="background:none; border:none; color:var(--danger); font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline; margin-left:10px;">Clear All</button>`;
+        }
+
+        let filtered = globalCases.filter(c => {
+            for (let k in currentFilters) {
+                if (k === 'specialists' || k === 'proctors' || k === 'implanters') {
+                    if (!c[k].includes(currentFilters[k])) return false;
+                } else {
+                    if (c[k] !== currentFilters[k]) return false;
+                }
+            }
+            return true;
+        });
+
+        const total = filtered.length;
+        
+        // Atualiza Lógica da Bateria CSS
+        let regTarget = regionalTargets[currentRegion] || 200;
+        document.getElementById('kpi-total').innerText = total;
+        document.getElementById('kpi-target-display').innerText = regTarget;
+        
+        let pctAchievedRaw = regTarget > 0 ? (total / regTarget) * 100 : 0;
+        let pctAchievedCapped = Math.min(100, pctAchievedRaw);
+        
+        let fillEl = document.getElementById('kpi-battery-fill');
+        let textEl = document.getElementById('kpi-battery-text');
+        
+        fillEl.style.width = pctAchievedCapped + '%';
+        
+        let colorVal = 'var(--success)'; // Verde por padrão
+        if(pctAchievedRaw < 35) colorVal = 'var(--danger)'; // Vermelho
+        else if(pctAchievedRaw < 75) colorVal = 'var(--venus-accent)'; // Laranja
+        
+        fillEl.style.backgroundColor = colorVal;
+        textEl.style.color = colorVal;
+        textEl.innerText = pctAchievedRaw.toFixed(1) + '%';
+
+        let progressEl = document.getElementById('kpi-progress-text');
+        let gap = regTarget - total;
+        let currentMonthIdx = new Date().getMonth();
+        let monthsRemaining = Math.max(1, 12 - currentMonthIdx);
+
+        if (gap <= 0) {
+            progressEl.innerText = `Goal Achieved! 🎉`;
+            progressEl.style.color = "var(--success)";
+        } else {
+            let neededPerMonth = Math.ceil(gap / monthsRemaining);
+            progressEl.innerText = `+${gap} left (${neededPerMonth}/mo needed)`;
+            progressEl.style.color = "var(--danger)";
+        }
+
+        let valves = {}, countries = {}, hospitals = {}, implanters = {}, specs = {}, proctors = {}, monthCounts = new Array(12).fill(0);
+        let hospC = {}, implC = {}, specC = {}, procC = {};
+        let totalFees = 0;
+
+        filtered.forEach(c => {
+            valves[c.valve] = (valves[c.valve] || 0) + 1;
+            countries[c.country] = (countries[c.country] || 0) + 1;
+            
+            hospitals[c.hospital] = (hospitals[c.hospital] || 0) + 1;
+            if(!hospC[c.hospital]) hospC[c.hospital] = {};
+            hospC[c.hospital][c.country] = (hospC[c.hospital][c.country] || 0) + 1;
+            
+            c.specialists.forEach(s => { 
+                if(s !== "Unknown Specialist") {
+                    specs[s] = (specs[s] || 0) + 1; 
+                    if(!specC[s]) specC[s] = {}; specC[s][c.country] = (specC[s][c.country] || 0) + 1;
+                }
+            });
+            c.implanters.forEach(i => { 
+                if(i !== "Unknown Doctor") {
+                    implanters[i] = (implanters[i] || 0) + 1; 
+                    if(!implC[i]) implC[i] = {}; implC[i][c.country] = (implC[i][c.country] || 0) + 1;
+                }
+            });
+            c.proctors.forEach(p => {
+                if(p !== "Unknown Doctor") {
+                    if (!proctors[p]) proctors[p] = { total: 0, paidCases: 0 };
+                    proctors[p].total++;
+                    if(!procC[p]) procC[p] = {}; procC[p][c.country] = (procC[p][c.country] || 0) + 1;
+                    
+                    if (c.country !== "Brazil") { 
+                        proctors[p].paidCases++; 
+                        totalFees += 2000; 
+                    }
+                }
+            });
+
+            let mIdx = monthNames.indexOf(c.monthName);
+            if (mIdx !== -1) monthCounts[mIdx]++;
+        });
+
+        document.getElementById('kpi-fees').innerText = "$" + totalFees.toLocaleString();
+        document.getElementById('kpi-top-country').innerText = Object.keys(countries).length ? Object.keys(countries).reduce((a, b) => countries[a] > countries[b] ? a : b) : "--";
+        document.getElementById('kpi-top-hospital').innerText = Object.keys(hospitals).length ? Object.keys(hospitals).reduce((a, b) => hospitals[a] > hospitals[b] ? a : b) : "--";
+        document.getElementById('kpi-doctors').innerText = Object.keys(implanters).length;
+
+        let valvesContainer = document.getElementById('valves-cards-container');
+        valvesContainer.innerHTML = '';
+        
+        let availableValves = Object.keys(valves);
+        if (availableValves.length === 0) availableValves = ['VenusP-Valve'];
+
+        availableValves.forEach(vName => {
+            let count = valves[vName] || 0;
+            let imgUrl = VALVE_IMAGES[vName] || "https://raw.githubusercontent.com/fblucciano/imagens-venus/9069e63d44d56d54148b383861cc14fa9af2d3b0/Venus%20P_Final.png";
+            let isActive = (currentFilters['valve'] === vName) ? 'active' : '';
+
+            valvesContainer.innerHTML += `
+                <div class="valve-card ${isActive}" id="card-${vName}" onclick="toggleFilter('valve', '${vName}')">
+                    <img src="${imgUrl}" alt="${vName}" class="valve-img">
+                    <div class="valve-name">${vName}</div>
+                    <div class="valve-count">${count}</div>
+                </div>
+            `;
+        });
+
+        valvesContainer.style.gridTemplateColumns = `repeat(${Math.min(availableValves.length, 4)}, 1fr)`;
+
+        // TECHNOLOGY MIX
+        let sortedValves = Object.entries(valves).sort((a, b) => b[1] - a[1]);
+        const valveColors = ['#E68A2E', '#302B6A', '#171434', '#6B7280', '#9CA3AF'];
+        let vHtml = '';
+        sortedValves.forEach((v, idx) => {
+             let pct = total > 0 ? (v[1]/total*100).toFixed(1) : 0;
+             let bgClass = (currentFilters['valve'] === v[0]) ? 'background-color: #EEF2FF;' : '';
+             let color = valveColors[idx % valveColors.length];
+             vHtml += `
+             <div class="html-ranking-row" style="${bgClass}" onclick="toggleFilter('valve', '${v[0]}')">
+                 <div class="html-ranking-labels">
+                     <div>${v[0]}</div>
+                     <div class="html-ranking-data">${v[1]} <span style="color:#64748B; font-size:10px;">(${pct}%)</span></div>
+                 </div>
+                 <div class="html-ranking-track">
+                     <div class="html-ranking-fill" style="width: ${pct}%; background: ${color};"></div>
+                 </div>
+             </div>`;
+        });
+        document.getElementById('mix-ranking-container').innerHTML = vHtml;
+
+        // COUNTRY RANKING
+        let sortedCountries = Object.entries(countries).sort((a, b) => b[1] - a[1]);
+        const countryColors = ['#302B6A', '#E68A2E', '#171434', '#6B7280', '#10B981', '#3B82F6', '#F59E0B'];
+        let cHtml = '';
+        sortedCountries.forEach((c, idx) => {
+             let pct = total > 0 ? (c[1]/total*100).toFixed(1) : 0;
+             let bgClass = (currentFilters['country'] === c[0]) ? 'background-color: #EEF2FF;' : '';
+             let color = countryColors[idx % countryColors.length];
+             cHtml += `
+             <div class="html-ranking-row" style="${bgClass}" onclick="toggleFilter('country', '${c[0]}')">
+                 <div class="html-ranking-labels">
+                     <div><span style="margin-right:6px;">${FLAGS[c[0]] || ''}</span>${c[0]}</div>
+                     <div class="html-ranking-data">${c[1]} <span style="color:#64748B; font-size:10px;">(${pct}%)</span></div>
+                 </div>
+                 <div class="html-ranking-track">
+                     <div class="html-ranking-fill" style="width: ${pct}%; background: ${color};"></div>
+                 </div>
+             </div>`;
+        });
+        document.getElementById('country-ranking-container').innerHTML = cHtml;
+
+        // Tabelas
+        function renderTable(tableId, dataObj, filterKey, isProctor = false, countryMap = {}) {
+            let tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            
+            let sortedData = Object.entries(dataObj).sort((a, b) => (isProctor ? b[1].total - a[1].total : b[1] - a[1]));
+            
+            sortedData.forEach(([name, val], index) => {
+                let flag = getFlag(name, countryMap[name]);
+                let bgClass = (currentFilters[filterKey] === name) ? 'style="background:#EEF2FF;"' : '';
+                
+                if (isProctor) {
+                    let medal = '';
+                    if (index === 0) medal = '<span class="medal">🥇</span>';
+                    else if (index === 1) medal = '<span class="medal">🥈</span>';
+                    else if (index === 2) medal = '<span class="medal">🥉</span>';
+                    else medal = `<span style="display:inline-block; width: 22px; text-align:center; color:#94A3B8; font-weight:bold; font-size:10px; margin-right:6px;">${index+1}.</span>`;
+
+                    let display = `${medal} <span class="flag-icon">${flag}</span> ${name}`;
+                    let fee = val.paidCases * 2000;
+                    let badge = (val.total > val.paidCases) ? `<br><span class="badge" style="margin-left:26px;">BR Cases (No Fee)</span>` : ``;
+                    tbody.innerHTML += `<tr class="clickable-row" ${bgClass} onclick="toggleFilter('${filterKey}', '${name}')"><td>${display} ${badge}</td><td class="val">${val.total}</td><td class="money">$${fee.toLocaleString()}</td></tr>`;
+                } else {
+                    let display = `${flag} ${name}`;
+                    tbody.innerHTML += `<tr class="clickable-row" ${bgClass} onclick="toggleFilter('${filterKey}', '${name}')"><td>${display}</td><td class="val">${val}</td></tr>`;
+                }
+            });
+        }
+        renderTable('hospitals-table', hospitals, 'hospital', false, hospC);
+        renderTable('spec-table', specs, 'specialists', false, specC);
+        renderTable('implants-table', implanters, 'implanters', false, implC);
+        renderTable('proctor-table', proctors, 'proctors', true, procC);
+
+        // GRÁFICO TREND MENSAL
+        if(trendChart) trendChart.destroy();
+        trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: monthNames, datasets: [{ label: 'Implants', data: monthCounts, backgroundColor: '#302B6A', borderRadius: 4 }] },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: { align: 'end', anchor: 'end', color: '#171434', textShadowBlur: 0, font: {family: 'Space Mono', size: 11, weight: 'bold'}, formatter: (v) => v > 0 ? v : '' } 
+                },
+                scales: { x: { grid: { display: false } }, y: { display: false, suggestedMax: Math.max(...monthCounts) * 1.2 } },
+                onClick: (evt, elements, chart) => { if (elements.length > 0) toggleFilter('monthName', chart.data.labels[elements[0].index]); }
+            }
+        });
+    }
+
+    function exportToPDF() {
+        document.getElementById('action-buttons').style.display = 'none';
+        const container = document.getElementById('app-content');
+        container.classList.add('pdf-print-mode');
+        
+        html2pdf().set({
+            margin: [10, 10, 10, 10], filename: 'Venus_Global_Report.pdf', image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(container).save().then(() => {
+            container.classList.remove('pdf-print-mode');
+            document.getElementById('action-buttons').style.display = 'flex';
+        });
+    }
+</script>
+</body>
+</html>
