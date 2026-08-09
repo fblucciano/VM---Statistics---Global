@@ -443,8 +443,8 @@
             if (!isValidField(part)) return;
             let n = part.toLowerCase().trim();
             
-            // Tira títulos
-            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s+/i, '');
+            // Remove Dr./Dra. mesmo se não houver espaço pós-ponto
+            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s*/i, '');
             
             if (n.includes("fabio") || n.includes("fábio") || n.includes("silva")) found.push("Fabio Silva");
             else if (n.includes("laura") || n.includes("zemp")) found.push("Laura Zemp");
@@ -477,7 +477,6 @@
         });
 
         if (found.length === 0) return ["Unknown Specialist"];
-        // Set() garante que "Fernanda, Fernanda" vire apenas UMA Fernanda.
         return [...new Set(found)]; 
     }
 
@@ -491,11 +490,10 @@
             if (!isValidField(part)) return;
             let n = part.toLowerCase().trim();
             
-            // Regex contra Ibrahims que caiam como "Brahi"
-            let isBrahi = /\b(brahi|barhi)\b/i.test(n);
-            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s+/i, '');
+            // Remove Dr./Dra.
+            let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s*/i, '');
             
-            if (isBrahi || n.includes("juan pablo de brahi")) found.push("Juan Pablo De Brahi");
+            if (n.includes("juan pablo") || n.includes("de brahi") || n.includes("de barhi") || n === "brahi" || n === "barhi") found.push("Juan Pablo De Brahi");
             else if (n.includes("spaletra")) found.push("Pablo Spaletra");
             else if (n.includes("knebel") || n.includes("alexis") || n.includes("vasiluk")) found.push("Alexis Knebel");
             else if (n.includes("montenegro")) found.push("Márcio Montenegro");
