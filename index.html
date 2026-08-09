@@ -206,7 +206,7 @@
         </div>
     </div>
 
-    <!-- TELA DE SELEÇÃO GLOBAL DE REGIÕES COM METAS INDIVIDUAIS POR CAIXA -->
+    <!-- TELA DE SELEÇÃO GLOBAL DE REGIÕES -->
     <div id="global-selector-view" class="hidden">
         <div class="global-banner">
             <h2>VenusMedtech Global Operations 2026</h2>
@@ -417,7 +417,6 @@
         if (name === "José Kleberth Tenório") return "🇧🇷";
         if (name === "Francisco") return "🇧🇷";
         if (name === "Marcio Truffa" || name === "Adriano Truffa") return "🇧🇷";
-        if (name === "Ricardo Lisboa Cardozo") return "🇧🇷";
 
         if (!countryDict || Object.keys(countryDict).length === 0) return "";
         let bestCountry = Object.keys(countryDict).reduce((a, b) => countryDict[a] > countryDict[b] ? a : b);
@@ -438,7 +437,6 @@
         if (!isValidField(rawSpec)) return ["Unknown Specialist"];
         
         let found = [];
-        // Divide e conquista: separa casos na mesma célula. Ex: "Adeyanira/Fernanda"
         let parts = String(rawSpec).split(/\n|\s*&\s*|\s*\+\s*|\s*,\s*|\s+and\s+|\s*\/\s*|\s*-\s*|\s+y\s+|\s+e\s+/i);
         
         parts.forEach(part => {
@@ -473,7 +471,6 @@
             else if (n.includes("ariane")) found.push("Ariane");
             else if (n.includes("jian") || n.includes("wang")) found.push("Jian Wang");
             else if (n.includes("gabriela") || n.includes("gabriella")) found.push("Gabriela Duarte");
-            else if (n.includes("ricardo")) found.push("Ricardo Lisboa Cardozo");
             else {
                 found.push(cleanName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
             }
@@ -494,9 +491,11 @@
             if (!isValidField(part)) return;
             let n = part.toLowerCase().trim();
             
+            // Regex contra Ibrahims que caiam como "Brahi"
+            let isBrahi = /\b(brahi|barhi)\b/i.test(n);
             let cleanName = part.trim().replace(/^(Dr|Dra|Ing|Prof)\.?\s+/i, '');
             
-            if (n.includes("brahi") || n.includes("barhi")) found.push("Juan Pablo De Brahi");
+            if (isBrahi || n.includes("juan pablo de brahi")) found.push("Juan Pablo De Brahi");
             else if (n.includes("spaletra")) found.push("Pablo Spaletra");
             else if (n.includes("knebel") || n.includes("alexis") || n.includes("vasiluk")) found.push("Alexis Knebel");
             else if (n.includes("montenegro")) found.push("Márcio Montenegro");
@@ -547,8 +546,8 @@
         if (h.includes("austral")) return "Hospital Austral";
         if (h.includes("necker")) return "Hospital Necker";
         if (h.includes("ankara")) return "Ankara City Hospital";
-        if (h === "incor") return "InCor SP"; 
-        return h.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+        if (h === "incor") return "InCor SP"; // Será re-tratado no loop da planilha
+        return String(raw).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
     function normalizeCountry(rawCountry) {
@@ -557,7 +556,7 @@
         if (c.includes("brasil") || c.includes("brazil")) return "Brazil";
         if (c.includes("france") || c.includes("frança")) return "France";
         if (c.includes("uk") || c.includes("united kingdom")) return "UK";
-        return c.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+        return String(rawCountry).replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
     function normalizeValve(rawValve) {
