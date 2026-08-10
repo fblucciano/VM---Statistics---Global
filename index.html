@@ -471,6 +471,7 @@
             else if (n.includes("ariane")) found.push("Ariane");
             else if (n.includes("jian") || n.includes("wang")) found.push("Jian Wang");
             else if (n.includes("gabriela") || n.includes("gabriella")) found.push("Gabriela Duarte");
+            else if (n.includes("ricardo")) found.push("Ricardo Lisboa Cardozo"); 
             else {
                 found.push(cleanName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
             }
@@ -545,7 +546,11 @@
         if (h.includes("austral")) return "Hospital Austral";
         if (h.includes("necker")) return "Hospital Necker";
         if (h.includes("ankara")) return "Ankara City Hospital";
-        if (h === "incor") return "InCor SP"; // Será re-tratado no loop da planilha
+        if (h === "incor") return "InCor SP"; 
+        
+        if (h.includes("icfuc") || h.includes("ic fuc") || h.includes("ic-") || h.includes("ic -")) {
+             return "ICFUC";
+        }
         
         return h.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
