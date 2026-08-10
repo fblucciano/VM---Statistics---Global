@@ -452,9 +452,23 @@
             else if (n.includes("erika") || n.includes("érika") || n.includes("rangel")) found.push("Érika Rangel");
             else if (n.includes("alice")) found.push("Alice Moraes");
             else if (n.includes("mariana")) found.push("Mariana Martinez");
+            
+            // É crítico que a regra da Michelle Altamirano fique antes da Marjorie Michel 
+            // para evitar que um "Michel" se misture com a "Michelle".
             else if (n.includes("michelle") || n.includes("michele")) found.push("Michelle Altamirano");
+            
             else if (n.includes("cesar") || n.includes("césar") || n.includes("pintos")) found.push("Cesar Pintos");
-            else if (n.includes("dirk")) found.push("Dirk");
+            
+            // -------- TIME EUROPA --------
+            else if (n.includes("dirk") || n.includes("colpaert")) found.push("Dirk Colpaert");
+            else if (n.includes("reinhardt") || n.includes("becht")) found.push("Reinhardt Becht");
+            else if (n.includes("jack") || n.includes("lips")) found.push("Jack Lips");
+            
+            // A regra da Marjorie Michel lida com 'Marjorie', a sigla 'MM', e apenas com o exato 'Michel' 
+            // garantindo que não estamos interceptando a Michelle que já foi barrada lá em cima.
+            else if (n.includes("marjorie") || n === "mm" || (n.includes("michel") && !n.includes("michelle") && !n.includes("michele"))) found.push("Marjorie Michel");
+            // -----------------------------
+
             else if (n.includes("duc anh") || n.includes("duc")) found.push("Duc Anh Nguyen");
             else if (n.includes("nattaya")) found.push("Nattaya");
             else if (n.includes("adeyanira")) found.push("Adeyanira Hernandez");
