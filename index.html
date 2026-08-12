@@ -121,6 +121,14 @@
         
         .chart-container { position: relative; width: 100%; flex-grow: 1; min-height: 220px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; overflow-y: auto;}
 
+        /* CONTAINER EXCLUSIVO PARA O CHART.JS */
+        .canvas-wrap {
+            position: relative;
+            width: 100%;
+            height: 220px; /* Altura fixa essencial para o Chart.js não explodir */
+            box-sizing: border-box;
+        }
+
         /* BARRAS GROSSAS RANKING */
         .html-ranking-row { display: flex; flex-direction: column; margin-bottom: 14px; cursor: pointer; padding: 6px; border-radius: 8px; transition: 0.2s;}
         .html-ranking-row:hover { background-color: #EEF2FF; }
@@ -278,7 +286,7 @@
             </div>
             <div class="panel">
                 <div class="panel-header"><h2 class="panel-title">MONTHLY TREND</h2></div>
-                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+                <div class="canvas-wrap"><canvas id="trendChart"></canvas></div>
             </div>
         </div>
 
@@ -946,7 +954,16 @@
         if(trendChart) trendChart.destroy();
         trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'bar',
-            data: { labels: monthNames, datasets: [{ label: 'Implants', data: monthCounts, backgroundColor: '#302B6A', borderRadius: 4 }] },
+            data: { 
+                labels: monthNames, 
+                datasets: [{ 
+                    label: 'Implants', 
+                    data: monthCounts, 
+                    backgroundColor: '#302B6A', 
+                    borderRadius: 4,
+                    maxBarThickness: 45 // Limita a espessura da barra
+                }] 
+            },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
                 plugins: { 
